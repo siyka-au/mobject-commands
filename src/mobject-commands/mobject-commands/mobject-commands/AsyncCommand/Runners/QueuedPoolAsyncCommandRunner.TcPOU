@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="QueuedPoolAsyncCommandRunner" Id="{3d968788-ea35-45c9-ac1d-1da7e9e9bafb}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'} 
+{attribute 'no_explicit_call' := 'This FB is a CLASS and must be accessed using methods or properties'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK QueuedPoolAsyncCommandRunner
+VAR
+	pool : LinkedList;
+	queue : Queue;
+	poolCapacity : CollectionSize;
+	queueCapacity : CollectionSize;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="CyclicCall" Id="{a3426739-d204-44be-9070-f3ff5b14d543}">
+      <Declaration><![CDATA[METHOD PUBLIC CyclicCall
+VAR
+	e : mobject_collections.I_ForwardEnumerator;
+	command : I_AsyncCommand;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF pool.Count < poolCapacity THEN
+	// Need to think about how we handle errors
+	IF queue.TryDequeue(command) THEN
+		pool.AddLast(command);
+		command.Execute();
+	END_IF
+END_IF
+
+IF pool.Count > 0 THEN
+	e := pool.GetEnumerator();
+	WHILE e.MoveNext() DO
+		IF e.TryGet(command) THEN
+			IF command <> 0 THEN
+				command.CyclicCall();
+				IF NOT command.Busy THEN
+					pool.Remove(command);
+				END_IF
+			END_IF
+		END_IF
+	END_WHILE
+	e.Dispose();
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecuteCommand" Id="{38a72f8d-c1be-4057-afa5-cec55af2bbfd}">
+      <Declaration><![CDATA[METHOD PUBLIC ExecuteCommand : BOOL
+VAR_INPUT
+	command : I_AsyncCommand;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF pool.Count < poolCapacity THEN
+	pool.AddLast(command);
+	command.Execute();
+	ExecuteCommand := TRUE;
+	RETURN;
+END_IF
+
+IF queue.Count < queueCapacity THEN
+	queue.Enqueue(command);
+	ExecuteCommand := TRUE;
+	RETURN;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{7bf32926-234b-433b-beeb-461c98b51d5b}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
+	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
+	poolCapacity : CollectionSize; // DINT(1..2147483647)
+	queueCapacity : CollectionSize;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[THIS^.poolCapacity := poolCapacity;
+THIS^.queueCapacity := queueCapacity;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="PoolCount" Id="{70b113a6-3d29-4bdd-9e14-4ca4868f5f93}">
+      <Declaration><![CDATA[PROPERTY PUBLIC PoolCount : DINT]]></Declaration>
+      <Get Name="Get" Id="{c7d533e4-86db-4724-ba6e-c592693cb426}">
+        <Declaration><![CDATA[PUBLIC]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[PoolCount := pool.Count;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="QueueCount" Id="{4ef39e5d-2ea6-488a-ac43-0b38dbb97090}">
+      <Declaration><![CDATA[PROPERTY PUBLIC QueueCount : DINT]]></Declaration>
+      <Get Name="Get" Id="{6975a982-8b9f-4872-8708-a853a493e2fd}">
+        <Declaration><![CDATA[PUBLIC]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[QueueCount := queue.Count;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

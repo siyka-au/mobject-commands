@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="DummyCommand" Id="{c45f4b59-19d8-459b-849f-afd6d76a0455}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'} 
+{attribute 'no_explicit_call' := 'This FB is a CLASS and must be accessed using methods or properties'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK PUBLIC DummyCommand EXTENDS AsyncCommand
+VAR
+	id : DINT;
+	timer : Ton;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="FB_init" Id="{987e07d6-a661-461e-ad4f-6b7893904672}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
+	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
+	id : DINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[THIS^.id := id;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="OnAborted" Id="{044ca0ff-1d7a-474a-8927-4b64f87e9e38}">
+      <Declaration><![CDATA[METHOD PROTECTED OnAborted]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[AdsLogDInt(
+	msgCtrlMask := ADSLOG_MSGTYPE_HINT,
+	msgFmtStr := 'Aborted DummyCommand{id=%d}',
+	dintArg := id
+);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="OnAborting" Id="{6d82c695-89af-42d6-9d3d-b8d4ebe09d5b}">
+      <Declaration><![CDATA[METHOD PROTECTED OnAborting
+VAR_INPUT
+	stateControl : I_AsyncCommandStateControl;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[AdsLogDInt(
+	msgCtrlMask := ADSLOG_MSGTYPE_HINT,
+	msgFmtStr := 'Aborting DummyCommand{id=%d}',
+	dintArg := id
+);
+WrapItUp(stateControl);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="OnCompleted" Id="{40545497-5659-48a8-b5ed-1031e09b5fca}">
+      <Declaration><![CDATA[METHOD PROTECTED OnCompleted : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[AdsLogDInt(
+	msgCtrlMask := ADSLOG_MSGTYPE_HINT,
+	msgFmtStr := 'Completed DummyCommand{id=%d}',
+	dintArg := id
+);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="OnCompleting" Id="{b9ccf744-6791-4421-a4cc-cc862a85264e}">
+      <Declaration><![CDATA[METHOD PROTECTED OnCompleting
+VAR_INPUT
+	stateControl : I_AsyncCommandStateControl;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[AdsLogDInt(
+	msgCtrlMask := ADSLOG_MSGTYPE_HINT,
+	msgFmtStr := 'Completing DummyCommand{id=%d}',
+	dintArg := id
+);
+
+WrapItUp(stateControl);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="OnErrored" Id="{503aa4d3-2723-4bb3-b90a-fcecf0359d95}">
+      <Declaration><![CDATA[METHOD PROTECTED OnErrored
+VAR_INST
+	firstCycle : BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT firstCycle THEN
+	firstCycle := TRUE;
+	AdsLogDInt(
+		msgCtrlMask := ADSLOG_MSGTYPE_HINT,
+		msgFmtStr := 'Errored DummyCommand{id=%d}',
+		dintArg := id
+	);	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="OnExecuting" Id="{b004c861-4d1d-492e-a545-487079fe8580}">
+      <Declaration><![CDATA[METHOD PROTECTED OnExecuting
+VAR_INPUT
+	stateControl : I_AsyncCommandStateControl;
+END_VAR
+VAR_INST
+	firstCycle : BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT firstCycle THEN
+	firstCycle := TRUE;
+	AdsLogDInt(
+		msgCtrlMask := ADSLOG_MSGTYPE_HINT,
+		msgFmtStr := 'Executing DummyCommand{id=%d}',
+		dintArg := id
+	);	
+END_IF
+
+timer(IN := TRUE, PT := T#10S);
+IF timer.Q THEN
+	stateControl.Next();
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="OnIdle" Id="{08430f16-a68e-4a5e-b45a-f35dc208c3f1}">
+      <Declaration><![CDATA[METHOD PROTECTED OnIdle
+VAR_INST
+	firstCycle : BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT firstCycle THEN
+	firstCycle := TRUE;
+	AdsLogDInt(
+		msgCtrlMask := ADSLOG_MSGTYPE_HINT,
+		msgFmtStr := 'Idle DummyCommand{id=%d}',
+		dintArg := id
+	);	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="OnInitializing" Id="{b77c0299-3327-4d59-b33b-2f995dc1885b}">
+      <Declaration><![CDATA[METHOD PROTECTED OnInitializing
+VAR_INPUT
+	stateControl : I_AsyncCommandStateControl;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[AdsLogDInt(
+	msgCtrlMask := ADSLOG_MSGTYPE_HINT,
+	msgFmtStr := 'Initialising DummyCommand{id=%d}',
+	dintArg := id
+);
+
+stateControl.Next();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="WrapItUp" Id="{d6b2a4de-4842-4e0b-82e3-b0ce35eafe27}">
+      <Declaration><![CDATA[METHOD PRIVATE WrapItUp
+VAR_INPUT
+	stateControl : I_AsyncCommandStateControl;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[timer(IN := FALSE);
+stateControl.Next();]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>
