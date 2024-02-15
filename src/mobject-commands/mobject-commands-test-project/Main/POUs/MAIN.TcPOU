@@ -3,30 +3,82 @@
   <POU Name="Main" Id="{ca1e1f26-6d15-4483-9500-7f4e2de7b73c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM Main
 VAR
-	runCommand : BOOL;
+	// Standalone command execution
+	pStandaloneCommand : POINTER TO DummyCommand;
+	runStandaloneCommand : BOOL;
+	abortStandaloneCommand : BOOL;
+	simulateErrorStandaloneCommand : BOOL;
+	simulatedStandaloneCommandErrorId : UDINT := 1234;
 	
-	poolCount : DINT;
-	queueCount : DINT;
+	standaloneCommandResult : I_Result;
+	standaloneCommandCompleted : BOOL;
+	standaloneCommandAborted : BOOL;
+	standaloneCommandError : BOOL;
+	standaloneCommandErrorId : UDINT;
 	
-	runner : QueuedPoolAsyncCommandRunner(poolCapacity := 2, queueCapacity := 5);
+	// SingleAsyncCommandRunner command execution
 	
-	command : I_AsyncCommand;
-	pCommand : POINTER TO DummyCommand;
-	nextId : DINT := 1;
+	// QueuedPoolAsyncCommandRunner command execution
+	runQueuedPoolCommand : BOOL;
+	pQueuedCommand : POINTER TO DummyCommand;
+
+	queuedPoolCommandRunner : QueuedPoolAsyncCommandRunner(poolCapacity := 2, queueCapacity := 5);
+	
+	// Support variables
+	id : DINT;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF runCommand THEN
-	runCommand := FALSE;
-	pCommand := __NEW(DummyCommand(id := nextId));
-	nextId := nextId + 1;
-	runner.ExecuteCommand(pCommand^);
+      <ST><![CDATA[// Standalone command execution
+IF runStandaloneCommand THEN
+	runStandaloneCommand := FALSE;
+	pStandaloneCommand := __NEW(DummyCommand(id := NextId(), name := 'standalone'));
 END_IF
 
-poolCount := runner.PoolCount;
-queueCount := runner.QueueCount;
+IF pStandaloneCommand <> 0 THEN
+	IF pStandaloneCommand^.Idle THEN
+		pStandaloneCommand^.Execute();
+	ELSIF pStandaloneCommand^.Executing THEN
+		pStandaloneCommand^.CyclicCall();
+		
+		IF abortStandaloneCommand THEN
+			abortStandaloneCommand := FALSE;
+			pStandaloneCommand^.Abort();
+		END_IF
+		
+		IF simulateErrorStandaloneCommand THEN
+			simulateErrorStandaloneCommand := FALSE;
+			pStandaloneCommand^.SimulateError(simulatedStandaloneCommandErrorId);
+		END_IF
+	ELSIF pStandaloneCommand^.Stopped THEN
+		standaloneCommandResult := pStandaloneCommand^.GetResult();
+		__DELETE(pStandaloneCommand);
+		standaloneCommandCompleted := standaloneCommandResult.Completed;
+		standaloneCommandAborted := standaloneCommandResult.Aborted;
+		standaloneCommandError := standaloneCommandResult.Error;
+		standaloneCommandErrorId := standaloneCommandResult.ErrorId;
+		standaloneCommandResult.Dispose();
+		standaloneCommandResult := 0;
+	END_IF
+END_IF
 
-runner.CyclicCall();]]></ST>
+// SingleAsyncCommandRunner command execution
+
+// QueuedPoolAsyncCommandRunner command execution
+IF runQueuedPoolCommand THEN
+	runQueuedPoolCommand := FALSE;
+	pQueuedCommand := __NEW(DummyCommand(id := NextId(), name := 'queued-pool'));
+	queuedPoolCommandRunner.QueueCommand(pQueuedCommand^);
+END_IF
+
+queuedPoolCommandRunner.CyclicCall();]]></ST>
     </Implementation>
+    <Method Name="NextId" Id="{f4c2d668-26f2-4c78-b288-a09ab44f096f}">
+      <Declaration><![CDATA[METHOD PRIVATE NextId : DINT]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[NextId := id;
+id := id + 1;]]></ST>
+      </Implementation>
+    </Method>
   </POU>
 </TcPlcObject>

@@ -60,10 +60,16 @@
     <Folder Include="_Internal\AsyncCommandStateMachine" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AsyncCommand\DefaultResult.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="AsyncCommand\Interface\I_AsyncCommand.TcIO">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="AsyncCommand\AsyncCommand.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="AsyncCommand\Interface\I_Result.TcIO">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="AsyncCommand\Runners\SingleAsyncCommandRunner.TcPOU">

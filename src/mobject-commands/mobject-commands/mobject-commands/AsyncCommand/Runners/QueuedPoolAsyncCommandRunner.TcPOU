@@ -14,10 +14,12 @@ END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[]]></ST>
     </Implementation>
+    <Folder Name="Constructor" Id="{ed5565cf-5a56-4fe6-afc3-af8867cab854}" />
+    <Folder Name="Properties" Id="{c90ce1dd-c8ed-450b-9da0-dbdb395ac42b}" />
     <Method Name="CyclicCall" Id="{a3426739-d204-44be-9070-f3ff5b14d543}">
       <Declaration><![CDATA[METHOD PUBLIC CyclicCall
 VAR
-	e : mobject_collections.I_ForwardEnumerator;
+	enumerator : mobject_collections.I_ForwardEnumerator;
 	command : I_AsyncCommand;
 END_VAR]]></Declaration>
       <Implementation>
@@ -30,42 +32,25 @@ END_VAR]]></Declaration>
 END_IF
 
 IF pool.Count > 0 THEN
-	e := pool.GetEnumerator();
-	WHILE e.MoveNext() DO
-		IF e.TryGet(command) THEN
+	enumerator := pool.GetEnumerator();
+	WHILE enumerator.MoveNext() DO
+		IF enumerator.TryGet(command) THEN
 			IF command <> 0 THEN
-				command.CyclicCall();
-				IF NOT command.Busy THEN
+				IF command.Idle THEN
+					command.Execute();
+				ELSIF command.Executing THEN
+					command.CyclicCall();
+				ELSIF command.Stopped THEN
 					pool.Remove(command);
 				END_IF
 			END_IF
 		END_IF
 	END_WHILE
-	e.Dispose();
+	enumerator.Dispose();
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="ExecuteCommand" Id="{38a72f8d-c1be-4057-afa5-cec55af2bbfd}">
-      <Declaration><![CDATA[METHOD PUBLIC ExecuteCommand : BOOL
-VAR_INPUT
-	command : I_AsyncCommand;
-END_VAR]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[IF pool.Count < poolCapacity THEN
-	pool.AddLast(command);
-	command.Execute();
-	ExecuteCommand := TRUE;
-	RETURN;
-END_IF
-
-IF queue.Count < queueCapacity THEN
-	queue.Enqueue(command);
-	ExecuteCommand := TRUE;
-	RETURN;
-END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="FB_init" Id="{7bf32926-234b-433b-beeb-461c98b51d5b}">
+    <Method Name="FB_init" Id="{7bf32926-234b-433b-beeb-461c98b51d5b}" FolderPath="Constructor\">
       <Declaration><![CDATA[METHOD FB_init : BOOL
 VAR_INPUT
 	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
@@ -78,8 +63,9 @@ END_VAR]]></Declaration>
 THIS^.queueCapacity := queueCapacity;]]></ST>
       </Implementation>
     </Method>
-    <Property Name="PoolCount" Id="{70b113a6-3d29-4bdd-9e14-4ca4868f5f93}">
-      <Declaration><![CDATA[PROPERTY PUBLIC PoolCount : DINT]]></Declaration>
+    <Property Name="PoolCount" Id="{70b113a6-3d29-4bdd-9e14-4ca4868f5f93}" FolderPath="Properties\">
+      <Declaration><![CDATA[{attribute 'monitoring' := 'call'}
+PROPERTY PUBLIC PoolCount : DINT]]></Declaration>
       <Get Name="Get" Id="{c7d533e4-86db-4724-ba6e-c592693cb426}">
         <Declaration><![CDATA[PUBLIC]]></Declaration>
         <Implementation>
@@ -87,8 +73,28 @@ THIS^.queueCapacity := queueCapacity;]]></ST>
         </Implementation>
       </Get>
     </Property>
-    <Property Name="QueueCount" Id="{4ef39e5d-2ea6-488a-ac43-0b38dbb97090}">
-      <Declaration><![CDATA[PROPERTY PUBLIC QueueCount : DINT]]></Declaration>
+    <Method Name="QueueCommand" Id="{38a72f8d-c1be-4057-afa5-cec55af2bbfd}">
+      <Declaration><![CDATA[METHOD PUBLIC QueueCommand : BOOL
+VAR_INPUT
+	command : I_AsyncCommand;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF pool.Count < poolCapacity THEN
+	pool.AddLast(command);
+	QueueCommand := TRUE;
+	RETURN;
+END_IF
+
+IF queue.Count < queueCapacity THEN
+	queue.Enqueue(command);
+	QueueCommand := TRUE;
+	RETURN;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="QueueCount" Id="{4ef39e5d-2ea6-488a-ac43-0b38dbb97090}" FolderPath="Properties\">
+      <Declaration><![CDATA[{attribute 'monitoring' := 'call'}
+PROPERTY PUBLIC QueueCount : DINT]]></Declaration>
       <Get Name="Get" Id="{6975a982-8b9f-4872-8708-a853a493e2fd}">
         <Declaration><![CDATA[PUBLIC]]></Declaration>
         <Implementation>

@@ -7,31 +7,58 @@
 FUNCTION_BLOCK PUBLIC DummyCommand EXTENDS AsyncCommand
 VAR
 	id : DINT;
+	name : T_MaxString;
 	timer : Ton;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[]]></ST>
     </Implementation>
+    <Method Name="AdsLog" Id="{2ffffb3c-6af9-4aae-82d8-019d37b5655a}">
+      <Declaration><![CDATA[METHOD PRIVATE AdsLog
+VAR_INPUT
+	message : T_MaxString;
+END_VAR
+VAR
+	arrghhhh : T_MaxString := '%s';
+END_VAR
+VAR_INST
+	format : FB_FormatString;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[format(
+	sFormat := 'DummyCommand{id=%d, name=%s} -> %s',
+	arg1 := F_DInt(id),
+	arg2 := F_String(name),
+	arg3 := F_String(arrghhhh)
+);
+
+AdsLogStr(
+	msgCtrlMask := ADSLOG_MSGTYPE_HINT,
+	msgFmtStr := format.sOut,
+	strArg := message
+);]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="FB_init" Id="{987e07d6-a661-461e-ad4f-6b7893904672}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
 VAR_INPUT
 	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
 	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
 	id : DINT;
+	name : T_MaxString;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[THIS^.id := id;]]></ST>
+        <ST><![CDATA[THIS^.id := id;
+THIS^.name := name;
+
+AdsLog('FB_init');]]></ST>
       </Implementation>
     </Method>
     <Method Name="OnAborted" Id="{044ca0ff-1d7a-474a-8927-4b64f87e9e38}">
       <Declaration><![CDATA[METHOD PROTECTED OnAborted]]></Declaration>
       <Implementation>
-        <ST><![CDATA[AdsLogDInt(
-	msgCtrlMask := ADSLOG_MSGTYPE_HINT,
-	msgFmtStr := 'Aborted DummyCommand{id=%d}',
-	dintArg := id
-);]]></ST>
+        <ST><![CDATA[AdsLog('Aborted');]]></ST>
       </Implementation>
     </Method>
     <Method Name="OnAborting" Id="{6d82c695-89af-42d6-9d3d-b8d4ebe09d5b}">
@@ -41,22 +68,15 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[AdsLogDInt(
-	msgCtrlMask := ADSLOG_MSGTYPE_HINT,
-	msgFmtStr := 'Aborting DummyCommand{id=%d}',
-	dintArg := id
-);
+        <ST><![CDATA[AdsLog('Aborting');
+
 WrapItUp(stateControl);]]></ST>
       </Implementation>
     </Method>
     <Method Name="OnCompleted" Id="{40545497-5659-48a8-b5ed-1031e09b5fca}">
       <Declaration><![CDATA[METHOD PROTECTED OnCompleted : BOOL]]></Declaration>
       <Implementation>
-        <ST><![CDATA[AdsLogDInt(
-	msgCtrlMask := ADSLOG_MSGTYPE_HINT,
-	msgFmtStr := 'Completed DummyCommand{id=%d}',
-	dintArg := id
-);]]></ST>
+        <ST><![CDATA[AdsLog('Completed');]]></ST>
       </Implementation>
     </Method>
     <Method Name="OnCompleting" Id="{b9ccf744-6791-4421-a4cc-cc862a85264e}">
@@ -66,11 +86,7 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[AdsLogDInt(
-	msgCtrlMask := ADSLOG_MSGTYPE_HINT,
-	msgFmtStr := 'Completing DummyCommand{id=%d}',
-	dintArg := id
-);
+        <ST><![CDATA[AdsLog('Completing');
 
 WrapItUp(stateControl);]]></ST>
       </Implementation>
@@ -83,11 +99,7 @@ END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[IF NOT firstCycle THEN
 	firstCycle := TRUE;
-	AdsLogDInt(
-		msgCtrlMask := ADSLOG_MSGTYPE_HINT,
-		msgFmtStr := 'Errored DummyCommand{id=%d}',
-		dintArg := id
-	);	
+	AdsLog('Errored');
 END_IF]]></ST>
       </Implementation>
     </Method>
@@ -103,11 +115,7 @@ END_VAR
       <Implementation>
         <ST><![CDATA[IF NOT firstCycle THEN
 	firstCycle := TRUE;
-	AdsLogDInt(
-		msgCtrlMask := ADSLOG_MSGTYPE_HINT,
-		msgFmtStr := 'Executing DummyCommand{id=%d}',
-		dintArg := id
-	);	
+	AdsLog('Executing');
 END_IF
 
 timer(IN := TRUE, PT := T#10S);
@@ -124,11 +132,7 @@ END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[IF NOT firstCycle THEN
 	firstCycle := TRUE;
-	AdsLogDInt(
-		msgCtrlMask := ADSLOG_MSGTYPE_HINT,
-		msgFmtStr := 'Idle DummyCommand{id=%d}',
-		dintArg := id
-	);	
+	AdsLog('Idle');
 END_IF]]></ST>
       </Implementation>
     </Method>
@@ -139,13 +143,18 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[AdsLogDInt(
-	msgCtrlMask := ADSLOG_MSGTYPE_HINT,
-	msgFmtStr := 'Initialising DummyCommand{id=%d}',
-	dintArg := id
-);
+        <ST><![CDATA[AdsLog('Initialising');
 
 stateControl.Next();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SimulateError" Id="{03a41147-adf6-494f-a89f-acdde40dc6b7}">
+      <Declaration><![CDATA[METHOD PUBLIC SimulateError
+VAR_INPUT
+	errorId : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[stateMachine.Error(errorId);]]></ST>
       </Implementation>
     </Method>
     <Method Name="WrapItUp" Id="{d6b2a4de-4842-4e0b-82e3-b0ce35eafe27}">

@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="DefaultResult" Id="{154edbc3-4814-488a-9547-ceded77c6b94}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'} 
+{attribute 'no_explicit_call' := 'This FB is a CLASS and must be accessed using methods or properties'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK INTERNAL DefaultResult EXTENDS Disposable IMPLEMENTS I_Result
+VAR
+	_completed : BOOL;
+	_aborted : BOOL;
+	_error : BOOL;
+	_errorId : UDINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Folder Name="Constructor" Id="{39aae8e8-142d-4389-8d92-ef1c2eb1a5b8}" />
+    <Property Name="Aborted" Id="{6bf24ab7-32bf-429d-a6c4-3ca22fbe679d}">
+      <Declaration><![CDATA[{attribute 'monitoring' := 'call'}
+PROPERTY PUBLIC Aborted : BOOL]]></Declaration>
+      <Get Name="Get" Id="{65b084f5-74d5-406f-82bf-ad14ed9410d3}">
+        <Declaration><![CDATA[PUBLIC]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Aborted := _aborted;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Completed" Id="{435bee2d-8e55-4e56-98f3-3568e96e8f16}">
+      <Declaration><![CDATA[{attribute 'monitoring' := 'call'}
+PROPERTY PUBLIC Completed : BOOL]]></Declaration>
+      <Get Name="Get" Id="{dc7b8639-706b-4096-bbbd-0172bffe562c}">
+        <Declaration><![CDATA[PUBLIC]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Completed := _completed;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Error" Id="{abd3e5bf-4855-47cd-b3a8-ff639b734310}">
+      <Declaration><![CDATA[{attribute 'monitoring' := 'call'}
+PROPERTY PUBLIC Error : BOOL]]></Declaration>
+      <Get Name="Get" Id="{93cbe3c6-d5ef-4327-9b92-3117ffbda3c7}">
+        <Declaration><![CDATA[PUBLIC]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Error := _error;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="ErrorId" Id="{851d3279-af12-4b09-9ac9-52d358619d66}">
+      <Declaration><![CDATA[{attribute 'monitoring' := 'call'}
+PROPERTY PUBLIC ErrorId : UDINT]]></Declaration>
+      <Get Name="Get" Id="{9340856d-a619-421f-a31c-2b44afef742c}">
+        <Declaration><![CDATA[PUBLIC]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ErrorId := _errorId;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="FB_init" Id="{b2c68725-be53-491a-a54f-c9e16d7688ef}" FolderPath="Constructor\">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
+	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
+	completed : BOOL;
+	aborted : BOOL;
+	error : BOOL;
+	errorId : UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[THIS^._completed := completed;
+THIS^._aborted := aborted;
+THIS^._error := error;
+THIS^._errorId := errorId;]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>
