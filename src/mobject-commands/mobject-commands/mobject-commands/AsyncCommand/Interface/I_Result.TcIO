@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1">
   <Itf Name="I_Result" Id="{93fca0a2-fc73-4651-a47b-9a736c07c4ca}">
     <Declaration><![CDATA[INTERFACE I_Result EXTENDS I_Disposable]]></Declaration>
     <Property Name="Aborted" Id="{290d46e2-3123-46fb-b9a5-d72b812877fb}">

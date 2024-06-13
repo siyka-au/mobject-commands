@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1">
   <Itf Name="I_AsyncCommand" Id="{1bee37c0-c3a5-0b6f-13cb-01d3f3ae4d04}">
     <Declaration><![CDATA[INTERFACE PUBLIC I_AsyncCommand extends I_Command]]></Declaration>
     <Method Name="Abort" Id="{af0faec8-03c9-094f-32c6-8876a661ccc2}">
